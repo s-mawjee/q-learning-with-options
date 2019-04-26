@@ -1,0 +1,15 @@
+from gym.envs.registration import register
+
+# Four rooms with G1
+register(
+    id='FourRooms-v1',
+    entry_point='envs.gridworld.envs.FourRooms:FourRooms',
+    kwargs={'mapFileName': 'map1.txt'}
+
+)
+# Four rooms with G2
+register(
+    id='FourRooms-v2',
+    entry_point='envs.gridworld.envs.FourRooms:FourRooms',
+    kwargs={'mapFileName': 'map2.txt'}
+)
