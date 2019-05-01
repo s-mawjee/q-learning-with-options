@@ -1,10 +1,11 @@
-import itertools
-import sys
-
+import time
 import gym
+import numpy as np
 import envs.gridworld
 
-from agents.qlearning.qlearning_agent import QLearningAgent
+from utils.options import load_option
+
+from agents.qlearning.qlearning_agent import QLearningAgent, QLearningWithOptionsAgent
 
 
 def train(parameters, withOptions=False):
@@ -13,54 +14,50 @@ def train(parameters, withOptions=False):
     alpha = parameters['alpha']
     epsilon = parameters['epsilon']
 
-    env = gym.make('FourRooms-v1')
-    if withOptions:
-        options = []
-        agent = QLearningAgent(env.action_space.n + len(options), discount_factor=gamma, alpha=alpha, epsilon=epsilon)
+    goal = "G1"
+    if goal == "G2":
+        env_name = "FourRooms-v2"
     else:
-        agent = QLearningAgent(env.action_space.n, discount_factor=gamma, alpha=alpha, epsilon=epsilon)
+        env_name = "FourRooms-v1"
+        goal = "G1"
+    env = gym.make(env_name)
 
-    total_total_reward = 0.0
-    for i_episode in range(num_episodes):
-        # global_step.assign_add(1)
+    if withOptions:
+        options = [load_option('FourRoomsO1'), load_option('FourRoomsO2')]
+        agent = QLearningWithOptionsAgent(env, options, discount_factor=gamma, alpha=alpha, epsilon=epsilon)
+    else:
+        agent = QLearningAgent(env, discount_factor=gamma, alpha=alpha, epsilon=epsilon)
 
-        # Print out which episode we're on.
-        if (i_episode + 1) % 100 == 0:
-            print("\rEpisode {}/{}.".format(i_episode + 1, num_episodes), end="")
-            sys.stdout.flush()
+    average_eps_reward = agent.train(num_episodes)
 
-        # Reset the environment and pick the first action
-        state = env.reset()
-
-        # One step in the environment
-        total_reward = 0.0
-        for t in itertools.count():
-            # Take a step
-            action = agent.step(state)
-            next_state, reward, done, _ = env.step(action)
-
-            total_reward += reward
-
-            # Update
-            agent.update(state, action, reward, next_state)
-
-            if done:
-                total_total_reward += reward
-                break
-
-            state = next_state
-
+    env.render(drawArrows=True, policy=q_to_policy(agent.q), name_prefix=env_name + " (" + goal + ")")
     env.close()
+    return average_eps_reward
 
-    return total_total_reward / num_episodes
+
+def q_to_policy(q, offset=0):
+    optimalPolicy = {}
+    for state in q:
+        optimalPolicy[state] = np.argmax(q[state]) + offset
+    return optimalPolicy
 
 
 def main():
-    parameters = {'episodes': 500, 'gamma': 0.9, 'alpha': 0.12, 'epsilon': 0.1}
+    parameters = {'episodes': 1, 'gamma': 0.9, 'alpha': 0.12, 'epsilon': 0.1}
     print('---Start---')
-    train(parameters)
+    start = time.time()
+    average_reward = train(parameters, withOptions=True)
+    end = time.time()
+    print('\nAverage reward:', average_reward)
+    print('Time (', parameters['episodes'], 'episodes ):', end - start)
     print('---End---')
 
 
 if __name__ == '__main__':
     main()
+# env = gym.make('FourRooms-v1')
+# actions = [0, 3, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 3, 3, 1, 1, 1, 0, 0, 0]
+# for a in actions:
+#     next_observation, reward, done, _ = env.step(a)  # Taking option
+#     # print(next_observation)
+# env.render()
