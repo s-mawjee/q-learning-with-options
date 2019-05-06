@@ -1,6 +1,6 @@
 from utils.options import load_option, save_option
 import gym
-from option import Option
+from option import QOption
 
 import envs.gridworld
 
@@ -15,11 +15,11 @@ def create_options(env):
     policy_option_1 = {
 
         # ROOM 0
-        '[0, (1, 1)]': DOWN, '[0, (1, 2)]': DOWN, '[0, (1, 3)]': DOWN, '[0, (1, 4)]': DOWN, '[0, (1, 5)]': DOWN,
-        '[0, (2, 1)]': DOWN, '[0, (2, 2)]': DOWN, '[0, (2, 3)]': DOWN, '[0, (2, 4)]': DOWN, '[0, (2, 5)]': DOWN,
+        '[0, (1, 1)]': RIGHT, '[0, (1, 2)]': RIGHT, '[0, (1, 3)]': RIGHT, '[0, (1, 4)]': RIGHT, '[0, (1, 5)]': DOWN,
+        '[0, (2, 1)]': DOWN, '[0, (2, 2)]': LEFT, '[0, (2, 3)]': LEFT, '[0, (2, 4)]': LEFT, '[0, (2, 5)]': LEFT,
         '[0, (3, 1)]': RIGHT, '[0, (3, 2)]': RIGHT, '[0, (3, 3)]': RIGHT, '[0, (3, 4)]': RIGHT, '[0, (3, 5)]': RIGHT,
-        '[0, (4, 1)]': UP, '[0, (4, 2)]': UP, '[0, (4, 3)]': UP, '[0, (4, 4)]': UP, '[0, (4, 5)]': UP,
-        '[0, (5, 1)]': UP, '[0, (5, 2)]': UP, '[0, (5, 3)]': UP, '[0, (5, 4)]': UP, '[0, (5, 5)]': UP,
+        '[0, (4, 1)]': UP, '[0, (4, 2)]': LEFT, '[0, (4, 3)]': LEFT, '[0, (4, 4)]': LEFT, '[0, (4, 5)]': LEFT,
+        '[0, (5, 1)]': RIGHT, '[0, (5, 2)]': RIGHT, '[0, (5, 3)]': RIGHT, '[0, (5, 4)]': RIGHT, '[0, (5, 5)]': UP,
 
         # ROOM 1
         '[1, (1, 7)]': DOWN, '[1, (1, 8)]': DOWN, '[1, (1, 9)]': DOWN, '[1, (1, 10)]': DOWN, '[1, (1, 11)]': DOWN,
@@ -50,21 +50,21 @@ def create_options(env):
     }
 
     term_set = ['[0, (3, 6)]', '[2, (7, 9)]', '[3, (10, 6)]', '[0, (6, 2)]']  # indexed by room
-    policy_selection = lambda self, state: self.policy[state]
+    policy_selection = lambda policy, state: policy[state]
 
-    def termination_condition(self, state):
+    def termination_condition(termination_set, state):
         index = int(state[1])
         # if state in self.termination_set:  # if stat in hall way then the termination_set changes by index of 1
         #     index = (index + 1) % 3
-        if state == self.termination_set[index]:
+        if state == termination_set[index]:
             return True
         return False
 
     # termination_condition = lambda self, state: state == self.termination_set[int(state[1])]
 
-    option1 = Option(env.observation_space.n, policy_option_1,
-                     term_set, policy_selection,
-                     termination_condition)
+    option1 = QOption(env.observation_space.n, policy_option_1,
+                      term_set, policy_selection,
+                      termination_condition, env.action_space.n)
 
     save_option('FourRoomsO1', option1)
 
@@ -88,8 +88,8 @@ def create_options(env):
 
         # ROOM 2
         '[2, (8, 7)]': RIGHT, '[2, (8, 8)]': RIGHT, '[2, (8, 9)]': UP, '[2, (8, 10)]': LEFT, '[2, (8, 11)]': LEFT,
-        '[2, (9, 7)]': UP, '[2, (9, 8)]': UP, '[2, (9, 9)]': UP, '[2, (9, 10)]': UP, '[2, (9, 11)]': UP,
-        '[2, (10, 7)]': UP, '[2, (10, 8)]': UP, '[2, (10, 9)]': UP, '[2, (10, 10)]': UP, '[2, (10, 11)]': UP,
+        '[2, (9, 7)]': UP, '[2, (9, 8)]': RIGHT, '[2, (9, 9)]': RIGHT, '[2, (9, 10)]': RIGHT, '[2, (9, 11)]': DOWN,
+        '[2, (10, 7)]': UP, '[2, (10, 8)]': LEFT, '[2, (10, 9)]': LEFT, '[2, (10, 10)]': LEFT, '[2, (10, 11)]': LEFT,
         '[2, (11, 7)]': UP, '[2, (11, 8)]': UP, '[2, (11, 9)]': UP, '[2, (11, 10)]': UP, '[2, (11, 11)]': UP,
         # ROOM 3
         '[3, (7, 1)]': DOWN, '[3, (7, 2)]': DOWN, '[3, (7, 3)]': DOWN, '[3, (7, 4)]': DOWN, '[3, (7, 5)]': DOWN,
@@ -108,9 +108,9 @@ def create_options(env):
 
     term_set = ['[0, (6, 2)]', '[3, (10, 6)]', '[2, (7, 9)]', '[0, (3, 6)]']  # indexed by room
 
-    option2 = Option(env.observation_space.n, policy_option_2,
-                     term_set, policy_selection,
-                     termination_condition)
+    option2 = QOption(env.observation_space.n, policy_option_2,
+                      term_set, policy_selection,
+                      termination_condition, env.action_space.n)
 
     save_option('FourRoomsO2', option2)
 
@@ -127,5 +127,5 @@ if __name__ == '__main__':
     create_options(env)
 
     # test load
-    o1 = load_option('FourRoomsO1')
-    view_option_policy(env, o1)
+    o = load_option('FourRoomsO2')
+    view_option_policy(env, o)

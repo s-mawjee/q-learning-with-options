@@ -1,3 +1,4 @@
+from ast import literal_eval
 import time
 import gym
 import numpy as np
@@ -8,7 +9,7 @@ from utils.options import load_option
 from agents.qlearning.qlearning_agent import QLearningAgent, QLearningWithOptionsAgent
 
 
-def train(parameters, withOptions=False):
+def train(parameters, withOptions=False, intra_options=False):
     num_episodes = int(parameters['episodes'])
     gamma = parameters['gamma']
     alpha = parameters['alpha']
@@ -24,18 +25,25 @@ def train(parameters, withOptions=False):
 
     if withOptions:
         options = [load_option('FourRoomsO1'), load_option('FourRoomsO2')]
-        agent = QLearningWithOptionsAgent(env, options, discount_factor=gamma, alpha=alpha, epsilon=epsilon)
+        agent = QLearningWithOptionsAgent(env, options, gamma=gamma, alpha=alpha, epsilon=epsilon,
+                                          intra_options=intra_options)
     else:
-        agent = QLearningAgent(env, discount_factor=gamma, alpha=alpha, epsilon=epsilon)
+        agent = QLearningAgent(env, gamma=gamma, alpha=alpha, epsilon=epsilon)
 
     average_eps_reward = agent.train(num_episodes)
 
-    env.render(drawArrows=True, policy=q_to_policy(agent.q), name_prefix=env_name + " (" + goal + ")")
+    if withOptions and intra_options:
+        options = agent.options
+        for i, o in enumerate(options):
+            env.render(drawArrows=True, policy=o.policy,
+                       name_prefix="Policy of Option " + str(i + 1) + "\n" + env_name + " (" + goal + ")")
+    env.render(drawArrows=True, policy=q_to_policy(env, agent.q), name_prefix=env_name + " (" + goal + ")")
+
     env.close()
     return average_eps_reward
 
 
-def q_to_policy(q, offset=0):
+def q_to_policy(env, q, offset=0):
     optimalPolicy = {}
     for state in q:
         optimalPolicy[state] = np.argmax(q[state]) + offset
@@ -43,10 +51,10 @@ def q_to_policy(q, offset=0):
 
 
 def main():
-    parameters = {'episodes': 1, 'gamma': 0.9, 'alpha': 0.12, 'epsilon': 0.1}
+    parameters = {'episodes': 1500, 'gamma': 0.9, 'alpha': 0.12, 'epsilon': 0.1}
     print('---Start---')
     start = time.time()
-    average_reward = train(parameters, withOptions=True)
+    average_reward = train(parameters, withOptions=True, intra_options=False)
     end = time.time()
     print('\nAverage reward:', average_reward)
     print('Time (', parameters['episodes'], 'episodes ):', end - start)
@@ -55,6 +63,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 # env = gym.make('FourRooms-v1')
 # actions = [0, 3, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 3, 3, 1, 1, 1, 0, 0, 0]
 # for a in actions:
