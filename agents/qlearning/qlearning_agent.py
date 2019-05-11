@@ -89,7 +89,7 @@ class QLearningWithOptionsAgent(QLearningAgent):
         self.q = defaultdict(lambda: np.zeros(self.number_of_action))
         self.intra_options = intra_options
         if intra_options:
-            self.option_q = defaultdict(lambda: np.zeros(self.number_of_action))
+            # self.option_q = defaultdict(lambda: np.zeros(self.number_of_action))
             self.option_q_hat = defaultdict(lambda: np.zeros(self.number_of_action))
 
         self.policy = self._make_epsilon_greedy_policy()
@@ -125,28 +125,28 @@ class QLearningWithOptionsAgent(QLearningAgent):
                                 update_options.append(i + self.environment.action_space.n)
 
                         # Intra option Q learning update
-                        self.option_q[state][action] = self.option_q[state][action] + self.alpha * (
-                                reward * self.gamma * (
-                                self.option_q_hat[next_state][action] - self.option_q[state][action]))
+                        self.q[state][action] = self.q[state][action] + self.alpha * (
+                                (reward * self.gamma * (self.option_q_hat[next_state][action])) -
+                                self.q[state][action])
 
-                        max_o = np.max(self.option_q[next_state])
+                        max_o = np.max(self.q[next_state])
                         if done:
                             beta_s = 1
                         else:
                             beta_s = 0
-                        self.option_q_hat[next_state][action] = (1 - beta_s) * self.option_q[next_state][
+                        self.option_q_hat[next_state][action] = (1 - beta_s) * self.q[next_state][
                             action] + beta_s * max_o
 
                         for o in update_options:
-                            self.option_q[state][o] += self.alpha * (reward + self.gamma * (
-                                    self.option_q_hat[next_state][o] - self.option_q[state][o]))
-                            max_o = np.max(self.option_q[next_state])
+                            self.q[state][o] += self.alpha * (reward + self.gamma * (
+                                    self.option_q_hat[next_state][o] - self.q[state][o]))
+                            max_o = np.max(self.q[next_state])
                             if self.options[o - self.environment.action_space.n].termination_condition(
                                     state=next_state):
                                 beta_s = 1
                             else:
                                 beta_s = 0
-                            self.option_q_hat[next_state][o] = (1 - beta_s) * self.option_q[next_state][
+                            self.option_q_hat[next_state][o] = (1 - beta_s) * self.q[next_state][
                                 o] + beta_s * max_o
 
                 total_reward += reward

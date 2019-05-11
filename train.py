@@ -51,10 +51,10 @@ def q_to_policy(env, q, offset=0):
 
 
 def main():
-    parameters = {'episodes': 1500, 'gamma': 0.9, 'alpha': 0.12, 'epsilon': 0.1}
+    parameters = {'episodes': 100000, 'gamma': 0.9, 'alpha': 0.12, 'epsilon': 0.1}
     print('---Start---')
     start = time.time()
-    average_reward = train(parameters, withOptions=True, intra_options=False)
+    average_reward = train(parameters, withOptions=True, intra_options=True)
     end = time.time()
     print('\nAverage reward:', average_reward)
     print('Time (', parameters['episodes'], 'episodes ):', end - start)
