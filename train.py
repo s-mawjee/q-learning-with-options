@@ -32,18 +32,19 @@ def train(parameters, withOptions=False, intra_options=False):
 
     average_eps_reward = agent.train(num_episodes)
 
-    if withOptions and intra_options:
-        options = agent.options
-        for i, o in enumerate(options):
-            env.render(drawArrows=True, policy=o.policy,
-                       name_prefix="Policy of Option " + str(i + 1) + "\n" + env_name + " (" + goal + ")")
-    env.render(drawArrows=True, policy=q_to_policy(env, agent.q), name_prefix=env_name + " (" + goal + ")")
+    # if withOptions and intra_options:
+    #     options = agent.options
+    #     for i, o in enumerate(options):
+    #         env.render(draw_arrows=True, policy=o.policy,
+    #                    name_prefix="Policy of Option " + str(i + 1) + "\n" + env_name + " (" + goal + ")")
+    env.render(draw_arrows=True, policy=q_to_policy(agent.q),
+               name_prefix=env_name + " (" + goal + ")")
 
     env.close()
     return average_eps_reward
 
 
-def q_to_policy(env, q, offset=0):
+def q_to_policy(q, offset=0):
     optimalPolicy = {}
     for state in q:
         optimalPolicy[state] = np.argmax(q[state]) + offset
@@ -51,7 +52,7 @@ def q_to_policy(env, q, offset=0):
 
 
 def main():
-    parameters = {'episodes': 100000, 'gamma': 0.9, 'alpha': 0.12, 'epsilon': 0.1}
+    parameters = {'episodes': 1000, 'gamma': 0.9, 'alpha': 0.12, 'epsilon': 0.1}
     print('---Start---')
     start = time.time()
     average_reward = train(parameters, withOptions=True, intra_options=True)
@@ -66,7 +67,9 @@ if __name__ == '__main__':
 
 # env = gym.make('FourRooms-v1')
 # actions = [0, 3, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 3, 3, 1, 1, 1, 0, 0, 0]
+# state = env.reset()
 # for a in actions:
 #     next_observation, reward, done, _ = env.step(a)  # Taking option
-#     # print(next_observation)
+#     print(state, a, next_observation, reward, done)
+#     state = next_observation
 # env.render()

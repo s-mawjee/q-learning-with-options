@@ -33,7 +33,8 @@ MAP = "1 1 1 1 1 1 1 1 1 1 1 1 1\n" \
 class FourRooms(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, goal_reward=10.0, step_reward=-1.0, goal='G1'):
+    def __init__(self, goal_reward=10.0, step_reward=-1.0, goal='G1', random_start_state=True):
+
         self.n = None
         self.m = None
 
@@ -44,6 +45,7 @@ class FourRooms(gym.Env):
 
         self._map_init()
 
+        self.random_start_state = random_start_state
         self.start_state_coord = (1, 1)
         self.state = self.start_state_coord
 
@@ -65,6 +67,11 @@ class FourRooms(gym.Env):
         # Gym spaces for observation and action space
         self.observation_space = spaces.Discrete(len(self.possibleStates))
         self.action_space = spaces.Discrete(4)
+
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        np.random.rand(seed)
+        return [seed]
 
     def step(self, action):
         assert self.action_space.contains(action)
@@ -95,10 +102,14 @@ class FourRooms(gym.Env):
 
     def reset(self):
         self.done = False
-        self.state = self.start_state_coord
+        if self.random_start_state:
+            idx = np.random.randint(len(self.possibleStates))
+            self.state = self.possibleStates[idx]  # self.start_state_coord
+        else:
+            self.state = self.start_state_coord
         return [self._getRoomNumber(), self.state]
 
-    def render(self, mode='human', drawArrows=False, policy=None, name_prefix='FourRooms-v1 (G1)'):
+    def render(self, mode='human', draw_arrows=False, policy=None, name_prefix='FourRooms-v1 (G1)'):
 
         img = self._gridmap_to_img()
         fig = plt.figure(1, figsize=(10, 8), dpi=60,
@@ -113,7 +124,7 @@ class FourRooms(gym.Env):
         plt.imshow(img, origin="upper", extent=[0, 13, 0, 13])
         fig.canvas.draw()
 
-        if drawArrows & (type(policy) is not None):  # For drawing arrows of optimal policy
+        if draw_arrows & (type(policy) is not None):  # For drawing arrows of optimal policy
             fig = plt.gcf()
             ax = fig.gca()
             for state, action in policy.items():
@@ -123,7 +134,7 @@ class FourRooms(gym.Env):
                     #  style='italic', bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 10})
                     if action == 4:
                         ax.text(x + 0.3, y + 0.3, 'O1', fontweight='bold')
-                    else:
+                    elif action == 5:
                         ax.text(x + 0.3, y + 0.3, 'O2', fontweight='bold')
                 elif action == -1:
                     ax.text(x + 0.3, y + 0.3, 'NE', fontweight='bold')
@@ -243,7 +254,7 @@ class FourRooms(gym.Env):
 
         obs_shape = [row_size, col_size, 3]
 
-        img = np.random.randn(*obs_shape) * 0.0
+        img = np.zeros(obs_shape)
 
         gs0 = int(img.shape[0] / row_size)
         gs1 = int(img.shape[1] / col_size)

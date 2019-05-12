@@ -84,12 +84,13 @@ class QLearningWithOptionsAgent(QLearningAgent):
 
     def __init__(self, env, options, gamma=1.0, alpha=0.5, epsilon=0.1, intra_options=False):
         super().__init__(env, gamma, alpha, epsilon)
+
         self.options = options
         self.number_of_action = env.action_space.n + len(options)
         self.q = defaultdict(lambda: np.zeros(self.number_of_action))
+
         self.intra_options = intra_options
         if intra_options:
-            # self.option_q = defaultdict(lambda: np.zeros(self.number_of_action))
             self.option_q_hat = defaultdict(lambda: np.zeros(self.number_of_action))
 
         self.policy = self._make_epsilon_greedy_policy()
@@ -164,7 +165,9 @@ class QLearningWithOptionsAgent(QLearningAgent):
         done = False
         total_reward = 0
         total_steps = 0
+
         option = self.options[action - self.environment.action_space.n]
+
         terminated = False
 
         while not terminated:
