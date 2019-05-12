@@ -54,8 +54,9 @@ def create_options(env):
 
     def termination_condition(termination_set, state):
         index = int(state[1])
-        # if state in self.termination_set:  # if stat in hall way then the termination_set changes by index of 1
-        #     index = (index + 1) % 3
+        if state in termination_set:  # if stat in hall way then the termination_set changes by index of 1
+            index = (index + 1) % 3
+
         if state == termination_set[index]:
             return True
         return False
@@ -69,6 +70,17 @@ def create_options(env):
     save_option('FourRoomsO1', option1)
 
     # Option 2 - anti clockwise hall way points
+
+    def termination_condition_2(termination_set, state):
+        index = int(state[1])
+        if state in termination_set:  # if stat in hall way then the termination_set changes by index of 1
+            index = (index - 1)
+            if index < 0:
+                index = 3
+
+        if state == termination_set[index]:
+            return True
+        return False
 
     policy_option_2 = {
         # ROOM 0
@@ -110,7 +122,7 @@ def create_options(env):
 
     option2 = QOption(env.observation_space.n, policy_option_2,
                       term_set, policy_selection,
-                      termination_condition, env.action_space.n)
+                      termination_condition_2, env.action_space.n)
 
     save_option('FourRoomsO2', option2)
 
