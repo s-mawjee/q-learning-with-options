@@ -3,6 +3,7 @@ import gym
 import numpy as np
 from gym import spaces
 from gym.utils import seeding
+from collections import defaultdict
 
 import matplotlib.pyplot as plt
 
@@ -33,7 +34,7 @@ MAP = "1 1 1 1 1 1 1 1 1 1 1 1 1\n" \
 class FourRooms(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, goal_reward=10.0, step_reward=-1.0, goal='G1', random_start_state=True):
+    def __init__(self, goal_reward=10.0, step_reward=-1.0, goal='G1', random_start_state=True, windiness=0.3):
 
         self.n = None
         self.m = None
@@ -68,6 +69,9 @@ class FourRooms(gym.Env):
         self.observation_space = spaces.Discrete(len(self.possibleStates))
         self.action_space = spaces.Discrete(4)
 
+        self.windiness = windiness
+        self.transition_probability = self._construct_transition_probability()
+
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         np.random.rand(seed)
@@ -78,7 +82,8 @@ class FourRooms(gym.Env):
 
         if self.state == self.goal:
             self.done = True
-            return [self._getRoomNumber(), self.state], self._get_reward(self.state), self.done, None
+            # return [self._get_room_number(), self.state], self._get_reward(self.state), self.done, None
+            return self.state, self._get_reward(self.state), self.done, None
 
         x, y = self.state
         if action == UP:
@@ -98,7 +103,8 @@ class FourRooms(gym.Env):
         else:
             self.state = new_state
 
-        return [self._getRoomNumber(), self.state], reward, self.done, None
+        # return [self._get_room_number(), self.state], reward, self.done, None
+        return self.state, reward, self.done, None
 
     def reset(self):
         self.done = False
@@ -107,7 +113,8 @@ class FourRooms(gym.Env):
             self.state = self.possibleStates[idx]  # self.start_state_coord
         else:
             self.state = self.start_state_coord
-        return [self._getRoomNumber(), self.state]
+        # return [self._get_room_number(), self.state]
+        return self.state
 
     def render(self, mode='human', draw_arrows=False, policy=None, name_prefix='FourRooms-v1 (G1)'):
 
@@ -128,7 +135,8 @@ class FourRooms(gym.Env):
             fig = plt.gcf()
             ax = fig.gca()
             for state, action in policy.items():
-                y, x = literal_eval(state)[1]
+                # y, x = literal_eval(state)[1]
+                y, x = literal_eval(state)
                 y = 12 - y
                 if action > 3:
                     #  style='italic', bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 10})
@@ -146,6 +154,68 @@ class FourRooms(gym.Env):
 
         plt.pause(0.00001)  # 0.01
         return
+
+    def _neighbouring(self, state, next_state):
+        x1, y1 = state
+        x2, y2 = next_state
+
+        if x1 == x2 and y1 == y2:
+            return True
+        elif x1 == x2:
+            if abs(y1 - y2) == 1:
+                return True
+            else:
+                return False
+        elif y1 == y2:
+            if abs(x1 - x2) == 1:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def _action_as_point(self, action):
+        x = 0
+        y = 0
+        if action == UP:
+            x = x - 1
+        elif action == DOWN:
+            x = x + 1
+        elif action == RIGHT:
+            y = y + 1
+        elif action == LEFT:
+            y = y - 1
+
+        return x, y
+
+    def _transition_probability(self, state, action, next_state):
+
+        if not self._neighbouring(state, next_state):
+            return 0.0
+
+        x1, y1 = state
+        xa, ya = self._action_as_point(action)
+        x2, y2 = next_state
+
+        if (x1 + xa == x2) and (y1 + ya == y2):
+            return 1 - self.windiness + self.windiness / self.action_space.n
+        elif state != next_state:
+            return self.windiness / self.action_space.n
+
+        return 0.0
+
+    def _construct_transition_probability(self):
+        p = defaultdict(lambda: [[] for _ in range(self.action_space.n)])
+        for state in self.possibleStates:
+            for action in range(self.action_space.n):
+                pa = defaultdict(lambda: 0.0)
+                for next_state in self.possibleStates:
+                    pa[str(next_state)] = self._transition_probability(state, action, next_state)
+                for next_state in self.walls:
+                    pa[str(next_state)] = self._transition_probability(state, action, next_state)
+
+                p[str(state)][action] = pa
+        return p
 
     def _map_init(self):
         self.grid = []
@@ -181,7 +251,7 @@ class FourRooms(gym.Env):
         return self.grid[state[0]][state[1]]
 
     # specific for MAP
-    def _getRoomNumber(self, state=None):
+    def _get_room_number(self, state=None):
         if state == None:
             state = self.state
         # if state isn't at hall way point
