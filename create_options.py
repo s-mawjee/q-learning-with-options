@@ -16,9 +16,9 @@ def create_options(env):
 
         # ROOM 0
         '(1, 1)': RIGHT, '(1, 2)': RIGHT, '(1, 3)': RIGHT, '(1, 4)': RIGHT, '(1, 5)': DOWN,
-        '(2, 1)': DOWN, '(2, 2)': LEFT, '(2, 3)': LEFT, '(2, 4)': LEFT, '(2, 5)': LEFT,
+        '(2, 1)': RIGHT, '(2, 2)': RIGHT, '(2, 3)': RIGHT, '(2, 4)': RIGHT, '(2, 5)': DOWN,
         '(3, 1)': RIGHT, '(3, 2)': RIGHT, '(3, 3)': RIGHT, '(3, 4)': RIGHT, '(3, 5)': RIGHT,
-        '(4, 1)': UP, '(4, 2)': LEFT, '(4, 3)': LEFT, '(4, 4)': LEFT, '(4, 5)': LEFT,
+        '(4, 1)': RIGHT, '(4, 2)': RIGHT, '(4, 3)': RIGHT, '(4, 4)': RIGHT, '(4, 5)': UP,
         '(5, 1)': RIGHT, '(5, 2)': RIGHT, '(5, 3)': RIGHT, '(5, 4)': RIGHT, '(5, 5)': UP,
 
         # ROOM 1
@@ -97,8 +97,8 @@ def create_options(env):
 
         # ROOM 2
         '(8, 7)': RIGHT, '(8, 8)': RIGHT, '(8, 9)': UP, '(8, 10)': LEFT, '(8, 11)': LEFT,
-        '(9, 7)': UP, '(9, 8)': RIGHT, '(9, 9)': RIGHT, '(9, 10)': RIGHT, '(9, 11)': DOWN,
-        '(10, 7)': UP, '(10, 8)': LEFT, '(10, 9)': LEFT, '(10, 10)': LEFT, '(10, 11)': LEFT,
+        '(9, 7)': UP, '(9, 8)': UP, '(9, 9)': UP, '(9, 10)': UP, '(9, 11)': UP,
+        '(10, 7)': UP, '(10, 8)': UP, '(10, 9)': UP, '(10, 10)': UP, '(10, 11)': UP,
         '(11, 7)': UP, '(11, 8)': UP, '(11, 9)': UP, '(11, 10)': UP, '(11, 11)': UP,
         # ROOM 3
         '(7, 1)': DOWN, '(7, 2)': DOWN, '(7, 3)': DOWN, '(7, 4)': DOWN, '(7, 5)': DOWN,
@@ -137,5 +137,7 @@ if __name__ == '__main__':
     create_options(env)
 
     # test load
-    o = load_option('FourRoomsO2')
-    view_option_policy(env, o)
+    o1 = load_option('FourRoomsO1')
+    view_option_policy(env, o1)
+    o2 = load_option('FourRoomsO2')
+    view_option_policy(env, o2)
