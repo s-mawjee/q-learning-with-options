@@ -50,7 +50,10 @@ class QLearningAgent(Agent):
         self.q[state][action] += self.alpha * td_delta
 
     def train(self, num_episodes=500, verbose=False):
-        total_total_reward = 0.0
+        stats = {
+            'episode_lengths': np.zeros(num_episodes),
+            'episode_rewards': np.zeros(num_episodes)}
+
         for i_episode in range(num_episodes):
 
             # Print out which episode we're on.
@@ -59,25 +62,23 @@ class QLearningAgent(Agent):
                 sys.stdout.flush()
 
             state = self.environment.reset()
-            state = str(state)
 
-            total_reward = 0.0
             for t in itertools.count():
 
                 action = self.act(state)
                 next_state, reward, done, _ = self.environment.step(action)
-                next_state = str(next_state)
 
-                total_reward += reward
+                # Update statistics
+                stats['episode_rewards'][i_episode] += reward
+                stats['episode_lengths'][i_episode] = t
 
                 self.update(state, action, reward, next_state)
 
                 if done:
-                    total_total_reward += total_reward
                     break
 
                 state = next_state
-        return total_total_reward / num_episodes  # return average eps reward
+        return stats
 
 
 class QLearningWithOptionsAgent(QLearningAgent):
@@ -96,7 +97,10 @@ class QLearningWithOptionsAgent(QLearningAgent):
         self.policy = self._make_epsilon_greedy_policy()
 
     def train(self, num_episodes=500, verbose=False):
-        total_total_reward = 0.0
+        stats = {
+            'episode_lengths': np.zeros(num_episodes),
+            'episode_rewards': np.zeros(num_episodes)}
+
         for i_episode in range(num_episodes):
 
             # Print out which episode we're on.
@@ -105,17 +109,20 @@ class QLearningWithOptionsAgent(QLearningAgent):
                 sys.stdout.flush()
 
             state = self.environment.reset()
-            state = str(state)
 
-            total_reward = 0.0
             for t in itertools.count():
 
                 action = self.act(state)
                 if action >= self.environment.action_space.n:
-                    next_state, reward, done, _ = self._execute_option(state, action)
+                    next_state, reward, done, _, total_steps = self._execute_option(state, action)
+                    # Update statistics
+                    stats['episode_rewards'][i_episode] += reward
+                    stats['episode_lengths'][i_episode] = total_steps
                 else:
                     next_state, reward, done, _ = self.environment.step(action)
-                    next_state = str(next_state)
+                    # Update statistics
+                    stats['episode_rewards'][i_episode] += reward
+                    stats['episode_lengths'][i_episode] = t
 
                     if self.intra_options:
 
@@ -150,16 +157,13 @@ class QLearningWithOptionsAgent(QLearningAgent):
                             self.option_q_hat[next_state][o] = (1 - beta_s) * self.q[next_state][
                                 o] + beta_s * max_o
 
-                total_reward += reward
-
                 self.update(state, action, reward, next_state)
 
                 if done:
-                    total_total_reward += total_reward
                     break
 
                 state = next_state
-        return total_total_reward / num_episodes  # return average eps reward
+        return stats
 
     def _execute_option(self, state, action):
         done = False
@@ -173,7 +177,6 @@ class QLearningWithOptionsAgent(QLearningAgent):
         while not terminated:
             a, terminated = option.step(state)
             next_state, reward, done, _ = self.environment.step(a)  # taking action
-            next_state = str(next_state)
 
             total_reward += reward * (self.gamma ** total_steps)
             total_steps += 1
@@ -183,4 +186,4 @@ class QLearningWithOptionsAgent(QLearningAgent):
 
             state = next_state
 
-        return state, total_reward, done, None
+        return state, total_reward, done, None, total_steps
