@@ -68,14 +68,15 @@ def plot_rewards(goal_index, stats, max_length, prefix, postfix, save_folder):
     plt.legend(['No options', 'With options'], loc='lower right')
     plt.xlabel("Episode")
     plt.ylabel("Episode Reward")
-    plt.title(prefix + "Episode Reward over Time" + postfix)
+    plt.title(prefix + "Episode Reward over Time" + postfix, fontsize=14)
     file_name = str(goal_index) + '_' + (prefix + "Episode Reward over Time" + postfix).replace(' ', '_').replace(':',
                                                                                                                   '_')
     fig1.savefig(save_folder + file_name)
+    plt.show()
 
 
 def plot_episode_length(goal_index, stats, max_length, prefix, postfix, save_folder):
-    fig1 = plt.figure(figsize=(10, 5))
+    fig1, ax = plt.subplots(figsize=(10, 5))  # plt.figure(figsize=(10, 5))
     x = np.arange(1, max_length + 1)
     get_plot(plt, x, stats, goal_index, 'standard', 'red', '')
     get_plot(plt, x, stats, goal_index, 'options', 'green', '')
@@ -84,10 +85,13 @@ def plot_episode_length(goal_index, stats, max_length, prefix, postfix, save_fol
     plt.legend(['No options', 'With options'], loc='upper right')
     plt.xlabel("Episode")
     plt.ylabel("Episode Length")
-    plt.title(prefix + "Episode Length over Time" + postfix)
+    # ax.set_yscale('log')
+    # ax.set_yticks([10, 20, 40, 80, 160, 320, 640])
+    plt.title(prefix + "Episode Length over Time" + postfix, fontsize=14)
     file_name = str(goal_index) + '_' + (prefix + "Episode Length over Time" + postfix).replace(' ', '_').replace(':',
                                                                                                                   '_')
     fig1.savefig(save_folder + file_name)
+    plt.show()
 
 
 def plot_episode_time_step(goal_index, stats, max_length, prefix, postfix, save_folder):
@@ -100,10 +104,11 @@ def plot_episode_time_step(goal_index, stats, max_length, prefix, postfix, save_
     plt.legend(['No options', 'With options'], loc='lower right')
     plt.xlabel("Time Steps")
     plt.ylabel("Episode")
-    plt.title(prefix + "Episode per time step" + postfix)
+    plt.title(prefix + "Episode per time step" + postfix, fontsize=14)
     file_name = str(goal_index) + '_' + (prefix + "Episode per time step" + postfix).replace(' ', '_').replace(':',
                                                                                                                '_')
     fig1.savefig(save_folder + file_name)
+    plt.show()
 
 
 def plot_all(params, stats, max_length=None):
@@ -117,9 +122,9 @@ def plot_all(params, stats, max_length=None):
     if max_length is None:
         max_length = len(stats[0]['standard'][0]['episode_lengths'])
 
-    number_of_runs = len(stats[0])
+    number_of_runs = len(stats[0]['standard'])
     for i, goal in enumerate(goals):
-        prefix = "FourRooms: " + goal
+        prefix = "FourRooms: " + goal + " "
         postfix = " (averaged over " + str(number_of_runs) + " runs)"
         plot_rewards(i, stats, max_length, prefix, postfix, save_plots_folder)
         plot_episode_length(i, stats, max_length, prefix, postfix, save_plots_folder)
@@ -139,7 +144,7 @@ def run(parameters):
 
     all_stats = []
     for goal in goals:
-        print('For Goal:', goal)
+        print('\nFor Goal:', goal)
         run_stats_standard = []
         run_stats_options = []
 
@@ -147,13 +152,11 @@ def run(parameters):
             print('\nRun:', i)
             env = gym.make(goal + "-v0")
             # with out options
-            _ = env.reset()
             standard_agent = QLearningAgent(env, gamma=gamma, alpha=alpha, epsilon=epsilon)
             standard_stats = standard_agent.train(num_episodes)
             run_stats_standard.append(standard_stats)
 
             # with options
-            _ = env.reset()
             agent = QLearningWithOptionsAgent(env, options, gamma=gamma, alpha=alpha, epsilon=epsilon,
                                               intra_options=False)
             options_stats = agent.train(num_episodes)
@@ -167,12 +170,12 @@ def run(parameters):
 
 
 def main():
-    parameters = {'episodes': 200,
+    parameters = {'episodes': 1000,
                   'gamma': 0.9,
                   'alpha': 0.125,
                   'epsilon': 0.1,
                   'goals': ['G1', 'G2'],
-                  'number_of_runs': 10}
+                  'number_of_runs': 25}
 
     all_stats = run(parameters)
     plot_all(parameters, all_stats)
