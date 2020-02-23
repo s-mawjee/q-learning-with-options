@@ -61,7 +61,7 @@ def create_options(env):
 
     # termination_condition = lambda self, state: state == self.termination_set[int(state[1])]
 
-    option1 = QOption(env.observation_space.n, policy_option_1,
+    option1 = QOption([x for x in range(env.observation_space.n)], policy_option_1,
                       term_set, policy_selection,
                       termination_condition, env.action_space.n)
 
@@ -112,7 +112,7 @@ def create_options(env):
             return True
         return False
 
-    option2 = QOption(env.observation_space.n, policy_option_2,
+    option2 = QOption([x for x in range(env.observation_space.n)], policy_option_2,
                       term_set, policy_selection,
                       termination_condition_2, env.action_space.n)
 
