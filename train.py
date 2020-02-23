@@ -111,13 +111,8 @@ def plot_episode_time_step(goal_index, stats, max_length, prefix, postfix, save_
     plt.show()
 
 
-def plot_all(params, stats, max_length=None):
+def plot_all(params, stats, output_dir, max_length=None):
     goals = params['goals']
-    save_plots_folder = "plots/"
-
-    if (os.path.isdir(save_plots_folder)):
-        shutil.rmtree(save_plots_folder)
-    os.makedirs(save_plots_folder)
 
     if max_length is None:
         max_length = len(stats[0]['standard'][0]['episode_lengths'])
@@ -126,9 +121,9 @@ def plot_all(params, stats, max_length=None):
     for i, goal in enumerate(goals):
         prefix = "FourRooms: " + goal + " "
         postfix = " (averaged over " + str(number_of_runs) + " runs)"
-        plot_rewards(i, stats, max_length, prefix, postfix, save_plots_folder)
-        plot_episode_length(i, stats, max_length, prefix, postfix, save_plots_folder)
-        plot_episode_time_step(i, stats, max_length, prefix, postfix, save_plots_folder)
+        plot_rewards(i, stats, max_length, prefix, postfix, output_dir)
+        plot_episode_length(i, stats, max_length, prefix, postfix, output_dir)
+        plot_episode_time_step(i, stats, max_length, prefix, postfix, output_dir)
 
 
 def run(parameters):
@@ -169,7 +164,7 @@ def run(parameters):
     return all_stats
 
 
-def main():
+def main(output_dir):
     parameters = {'episodes': 1000,
                   'gamma': 0.9,
                   'alpha': 0.125,
@@ -178,8 +173,44 @@ def main():
                   'number_of_runs': 25}
 
     all_stats = run(parameters)
-    plot_all(parameters, all_stats)
+    plot_all(parameters, all_stats, output_dir)
+
+
+def plot_env(output_dir):
+    for goal in ['G1', 'G2']:
+        env = gym.make(goal + "-v0")
+        env.reset(0)
+        fig = env.render(title='Four Rooms: Goal ' + goal)
+        fig.savefig(output_dir + 'fourrooms_' + goal)
+
+
+def plot_options(output_dir, goal='G1'):
+    env = gym.make(goal + "-v0")
+    options = [load_option('FourRoomsO1'), load_option('FourRoomsO2')]
+    for i, option in enumerate(options):
+        title_post = ''
+        if i == 0:
+            title_post = 'Option 1 (clockwise)'
+        elif i == 1:
+            title_post = 'Option 2 (anti-clockwise)'
+
+        fig = env.render(title='Four Rooms: ' + title_post,
+                         draw_arrows=True,
+                         policy=option.policy,
+                         init_states=option.initialisation_set,
+                         plot_option=True,
+                         termination_states=option.termination_set)
+
+        fig.savefig(output_dir + 'option_' + str(i + 1) + '_fourrooms')
 
 
 if __name__ == '__main__':
-    main()
+    output_folder = "./output/"
+
+    if (os.path.isdir(output_folder)):
+        shutil.rmtree(output_folder)
+    os.makedirs(output_folder)
+
+    plot_env(output_folder)
+    plot_options(output_folder)
+    main(output_folder)
