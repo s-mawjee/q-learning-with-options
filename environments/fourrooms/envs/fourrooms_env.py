@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import gym
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import numpy as np
 from gym import spaces
 
@@ -14,7 +15,7 @@ NUMBER_OF_ACTIONS = 4
 # Define colors
 # COLOURS = {0: [1, 1, 1], 1: [0.0, 0.0, 0.0], 3: [0.0, 0.0, 0.0], 10: [0.0, 0, 0]}
 COLOURS = {0: [1, 1, 1], 1: [0.6, 0.3, 0.0],
-           3: [0.0, 1.0, 0.0], 10: [0.6, 0, 1]}
+           3: [0.0, 1.0, 0.0], 10: [0.6, 0.0, 1], 12: [0.8, 0.5, 1]}
 # Define Map
 map1 = "1 1 1 1 1 1 1 1 1 1 1 1 1\n" \
        "1 0 0 0 0 0 1 0 0 0 0 0 1\n" \
@@ -203,7 +204,7 @@ class FourRoomsEnv(gym.Env):
 
     def reset(self, state=None):
         if state is None:
-            self.__current_state = self.__get_random_state()
+            self.__current_state = 0  # self.__get_random_state()
         else:
             self.__current_state = state
         return self.__current_state
@@ -216,24 +217,25 @@ class FourRoomsEnv(gym.Env):
         pass
 
     def render(self, mode='human', draw_arrows=False, draw_values=False, draw_rewards=False, V=None, policy=None,
-               R=None, title=None, grid=False, cmap='RdYlGn', draw_numbers=False):
+               R=None, title=None, grid=False, cmap='RdYlGn', draw_numbers=False, plot_option=False,
+               termination_states=None, init_states=[]):
         size_n = self.__number_of_rows
         size_m = self.__number_of_columns
         extent = [0, size_n, 0, size_m]
-        img = self.__gridmap_to_img()
+        img = self.gridmap_to_img(
+            terminal_states=termination_states, init_states=init_states)
 
         if mode == 'human':
             fig = plt.figure(1, figsize=(10, 8), dpi=60,
                              facecolor='w', edgecolor='k')
 
-            plt.clf()
-            plt.xticks(np.arange(0, size_n, 1))
-            plt.yticks(np.arange(0, size_m, 1))
+            plt.xticks(np.arange(0, size_n, 1), "")
+            plt.yticks(np.arange(0, size_m, 1), "")
 
             if title:
-                plt.title(title)
+                plt.title(title, fontsize=20)
 
-            plt.imshow(img, origin="upper", extent=extent)
+            plt.imshow(img, origin="upper", extent=extent, alpha=0.9)
             plt.grid(grid, color='k', linewidth=2)
             fig.canvas.draw()
 
@@ -263,17 +265,21 @@ class FourRoomsEnv(gym.Env):
                 state_coord = self.__possibleStates[state]
                 y, x = state_coord
                 y = len(self.__grid) - 1 - y
-                action = np.argmax(policy[state])
-                if all(policy[state][0] == policy[state]):
-                    continue
+                action = -1
+                if type(policy[state]) is int:
+                    action = policy[state]
                 else:
-                    if action > 3:
-                        ax.text(x + 0.3, y + 0.3, 'O' +
-                                str(action - 3), fontweight='bold')
-                    elif action == -1:
-                        ax.text(x + 0.3, y + 0.3, 'NE', fontweight='bold')
-                    else:
-                        self.__draw_arrows(x, y, action)
+                    action = np.argmax(policy[state])
+                    if all(policy[state][0] == policy[state]):
+                        continue
+
+                if action > 3:
+                    ax.text(x + 0.3, y + 0.3, 'O' +
+                            str(action - 3), fontweight='bold')
+                elif action == -1:
+                    ax.text(x + 0.3, y + 0.3, 'NE', fontweight='bold')
+                else:
+                    self.__draw_arrows(x, y, action)
         if draw_numbers:
             fig = plt.gcf()
             ax = fig.gca()
@@ -283,10 +289,16 @@ class FourRoomsEnv(gym.Env):
                 y = len(self.__grid) - 1 - y
                 ax.text(x + 0.3, y + 0.3, str(state), fontweight='bold')
 
+        if plot_option:
+            init = mpatches.Patch(color=COLOURS[12], label='Initiation state')
+            termin = mpatches.Patch(
+                color=COLOURS[3], label='Termination state')
+            plt.legend(handles=[init, termin], loc='upper left')
+
         # plt.pause(0.00001)  # 0.01
         if mode == 'human':
             plt.show()
-            return
+            return fig
         elif mode == 'rgb_array':
             return img
         return
@@ -321,7 +333,12 @@ class FourRoomsEnv(gym.Env):
                   head_width=0.4,
                   )
 
-    def __gridmap_to_img(self):
+    def gridmap_to_img(self, terminal_states=None, init_states=None):
+        if terminal_states is None:
+            terminal_states = self.__terminal_states
+        if init_states is None:
+            init_states = []
+
         row_size = len(self.__grid)
         col_size = len(self.__grid[0])
 
@@ -335,13 +352,19 @@ class FourRoomsEnv(gym.Env):
             for j in range(col_size):
                 for k in range(3):
                     state_coord_string = str((i, j))
-                    if self.__possibleStatesToIndex[state_coord_string] == self.__current_state:
-                        this_value = COLOURS[10][k]
-                    elif self.__possibleStatesToIndex[state_coord_string] in self.__terminal_states:
+
+                    # if self.__possibleStatesToIndex[state_coord_string] == self.__current_state:
+                    #     this_value = COLOURS[10][k]
+
+                    if self.__possibleStatesToIndex[state_coord_string] in terminal_states:
                         this_value = COLOURS[3][k]
+
+                    elif self.__possibleStatesToIndex[state_coord_string] in init_states:
+                        this_value = COLOURS[12][k]
+
                     else:
                         colour_number = int(self.__grid[i][j])
                         this_value = COLOURS[colour_number][k]
                     img[i * gs0:(i + 1) * gs0, j * gs1:(j + 1)
-                                                       * gs1, k] = this_value
+                        * gs1, k] = this_value
         return img
