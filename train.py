@@ -1,13 +1,18 @@
-import shutil
 import os
+import shutil
 
+import dill
 import gym
 import numpy as np
 from matplotlib import pyplot as plt
+from qbstyles import mpl_style
 
-from utils.options import load_option
 from agents.qlearning.qlearning import QLearningAgent, QLearningWithOptionsAgent
-from environments.fourrooms.envs.fourrooms_env import FourRoomsEnv
+from utils.options import load_option
+
+mpl_style(dark=False, minor_ticks=True)
+figure_size = (10, 6)
+legend_alpha = 0.5
 
 
 def process_stats(stats_list, reward):
@@ -52,61 +57,73 @@ def get_plot(plt, x, stats, env_index, name, colour, type, line="-"):
     # mean_smoothed = pd.Series(mean).rolling(5, min_periods=5).mean()
     cumsum = type == 'cumsum'
     if cumsum:
-        plt.plot(np.cumsum(mean), x, line, color=colour)
+        plt.plot(x, np.cumsum(mean), line, color=colour)
     else:
         plt.plot(x, mean, line, color=colour)
         plt.fill_between(x, q1, q3, color=colour, alpha=0.2)
 
 
 def plot_rewards(goal_index, stats, max_length, prefix, postfix, save_folder):
-    fig1 = plt.figure(figsize=(10, 5))
+    fig1, ax = plt.subplots(figsize=figure_size)
     x = np.arange(1, max_length + 1)
-    get_plot(plt, x, stats, goal_index, 'standard', 'red', 'reward')
-    get_plot(plt, x, stats, goal_index, 'options', 'green', 'reward')
-    # get_plot(plt, x, stats, goal_index, 'optimal', 'black', 'reward', line='--')
+    get_plot(plt, x, stats, goal_index, 'standard', 'lightcoral', 'reward')
+    get_plot(plt, x, stats, goal_index, 'options', 'mediumseagreen', 'reward')
 
-    plt.legend(['No options', 'With options'], loc='lower right')
+    plt.legend(['No options', 'With options'], loc='lower right', framealpha=legend_alpha)
+
+    ax.set_xlim(xmin=0)
+    ax.set_xlim(xmax=max_length)
     plt.xlabel("Episode")
     plt.ylabel("Episode Reward")
-    plt.title(prefix + "Episode Reward over Time" + postfix, fontsize=14)
-    file_name = str(goal_index) + '_' + (prefix + "Episode Reward over Time" + postfix).replace(' ', '_').replace(':',
-                                                                                                                  '_')
+    plt.title(prefix + "Episode Reward over Time" + postfix)
+    file_name = str(goal_index + 1) + '_' + (prefix + "Episode Reward over Time" + postfix).replace(' ', '_').replace(
+        ':',
+        '_')
     fig1.savefig(save_folder + file_name)
     plt.show()
 
 
 def plot_episode_length(goal_index, stats, max_length, prefix, postfix, save_folder):
-    fig1, ax = plt.subplots(figsize=(10, 5))  # plt.figure(figsize=(10, 5))
+    fig1, ax = plt.subplots(figsize=figure_size)
     x = np.arange(1, max_length + 1)
-    get_plot(plt, x, stats, goal_index, 'standard', 'red', '')
-    get_plot(plt, x, stats, goal_index, 'options', 'green', '')
-    # get_plot(plt, x, stats, goal_index, 'optimal', 'black', '', line='--')
+    get_plot(plt, x, stats, goal_index, 'standard', 'lightcoral', '')
+    get_plot(plt, x, stats, goal_index, 'options', 'mediumseagreen', '')
 
-    plt.legend(['No options', 'With options'], loc='upper right')
+    plt.legend(['No options', 'With options'], loc='upper right', framealpha=legend_alpha)
     plt.xlabel("Episode")
     plt.ylabel("Episode Length")
-    # ax.set_yscale('log')
-    # ax.set_yticks([10, 20, 40, 80, 160, 320, 640])
-    plt.title(prefix + "Episode Length over Time" + postfix, fontsize=14)
-    file_name = str(goal_index) + '_' + (prefix + "Episode Length over Time" + postfix).replace(' ', '_').replace(':',
-                                                                                                                  '_')
+
+    ax.set_ylim(ymin=0)
+    ax.set_xlim(xmin=0)
+    ax.set_xlim(xmax=max_length)
+    plt.title(prefix + "Episode Length over Time" + postfix)
+    file_name = str(goal_index + 1) + '_' + (prefix + "Episode Length over Time" + postfix).replace(' ', '_').replace(
+        ':',
+        '_')
     fig1.savefig(save_folder + file_name)
     plt.show()
 
 
 def plot_episode_time_step(goal_index, stats, max_length, prefix, postfix, save_folder):
-    fig1 = plt.figure(figsize=(10, 5))
+    fig1, ax = plt.subplots(figsize=figure_size)
     x = np.arange(1, max_length + 1)
-    get_plot(plt, x, stats, goal_index, 'standard', 'red', 'cumsum')
-    get_plot(plt, x, stats, goal_index, 'options', 'green', 'cumsum')
+    get_plot(plt, x, stats, goal_index, 'standard', 'lightcoral', 'cumsum')
+    get_plot(plt, x, stats, goal_index, 'options', 'mediumseagreen', 'cumsum')
     # get_plot(plt, x, stats, goal_index, 'optimal', 'black', 'cumsum', line='--')
 
-    plt.legend(['No options', 'With options'], loc='lower right')
-    plt.xlabel("Time Steps")
-    plt.ylabel("Episode")
-    plt.title(prefix + "Episode per time step" + postfix, fontsize=14)
-    file_name = str(goal_index) + '_' + (prefix + "Episode per time step" + postfix).replace(' ', '_').replace(':',
-                                                                                                               '_')
+    plt.legend(['No options', 'With options'], loc='upper left', framealpha=legend_alpha)
+
+    plt.ylabel("Time Steps")
+    plt.xlabel("Number of tasks")
+    ax.set_ylim(ymin=0)
+    ax.set_xlim(xmin=0)
+    ax.set_xlim(xmax=max_length)
+    plt.title(prefix + "Number of time-steps to solve n-tasks" + postfix)
+    file_name = str(goal_index + 1) + '_' + (prefix + "Number of time-steps to solve n-tasks").replace(' ',
+                                                                                                       '_').replace(
+        ':',
+        '_')
+
     fig1.savefig(save_folder + file_name)
     plt.show()
 
@@ -119,7 +136,7 @@ def plot_all(params, stats, output_dir, max_length=None):
 
     number_of_runs = len(stats[0]['standard'])
     for i, goal in enumerate(goals):
-        prefix = "FourRooms: " + goal + " "
+        prefix = "FourRooms " + goal + ": "
         postfix = " (averaged over " + str(number_of_runs) + " runs)"
         plot_rewards(i, stats, max_length, prefix, postfix, output_dir)
         plot_episode_length(i, stats, max_length, prefix, postfix, output_dir)
@@ -164,18 +181,6 @@ def run(parameters):
     return all_stats
 
 
-def main(output_dir):
-    parameters = {'episodes': 1000,
-                  'gamma': 0.9,
-                  'alpha': 0.125,
-                  'epsilon': 0.1,
-                  'goals': ['G1', 'G2'],
-                  'number_of_runs': 25}
-
-    all_stats = run(parameters)
-    plot_all(parameters, all_stats, output_dir)
-
-
 def plot_env(output_dir):
     for goal in ['G1', 'G2']:
         env = gym.make(goal + "-v0")
@@ -204,8 +209,14 @@ def plot_options(output_dir, goal='G1'):
         fig.savefig(output_dir + 'option_' + str(i + 1) + '_fourrooms')
 
 
-if __name__ == '__main__':
+def main():
     output_folder = "./output/"
+    parameters = {'episodes': 1000,
+                  'gamma': 0.9,
+                  'alpha': 0.125,
+                  'epsilon': 0.1,
+                  'goals': ['G1', 'G2'],
+                  'number_of_runs': 25}
 
     if (os.path.isdir(output_folder)):
         shutil.rmtree(output_folder)
@@ -213,4 +224,32 @@ if __name__ == '__main__':
 
     plot_env(output_folder)
     plot_options(output_folder)
-    main(output_folder)
+
+    all_stats = run(parameters)
+
+    # save stats
+    output = open(output_folder + 'all_stats' + ".pkl", 'wb')
+    dill.dump(all_stats, output)
+    output.close()
+
+    # plot
+    plot_all(parameters, all_stats, output_folder)
+
+    return all_stats
+
+
+if __name__ == '__main__':
+    main()
+
+    # output_folder = "./output/"
+    # parameters = {'episodes': 1000,
+    #               'gamma': 0.9,
+    #               'alpha': 0.125,
+    #               'epsilon': 0.1,
+    #               'goals': ['G1', 'G2'],
+    #               'number_of_runs': 25}
+    #
+    # input_file = open(output_folder + 'all_stats' + ".pkl", 'rb')
+    # all_stats = dill.load(input_file)
+    # # plot
+    # plot_all(parameters, all_stats, output_folder, max_length=500)
