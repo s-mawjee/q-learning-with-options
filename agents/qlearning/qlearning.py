@@ -117,7 +117,7 @@ class QLearningWithOptionsAgent(QLearningAgent):
                     next_state, reward, done, _, total_steps = self._execute_option(state, action)
                     # Update statistics
                     stats['episode_rewards'][i_episode] += reward
-                    stats['episode_lengths'][i_episode] = total_steps
+                    stats['episode_lengths'][i_episode] += total_steps
                 else:
                     next_state, reward, done, _ = self.environment.step(action)
                     # Update statistics
