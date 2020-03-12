@@ -10,6 +10,8 @@ from qbstyles import mpl_style
 from agents.qlearning.qlearning import QLearningAgent, QLearningWithOptionsAgent
 from utils.options import load_option
 
+from environments.fourrooms.envs.fourrooms_env import FourRoomsEnv
+
 mpl_style(dark=False, minor_ticks=True)
 figure_size = (10, 6)
 legend_alpha = 0.5
@@ -69,7 +71,8 @@ def plot_rewards(goal_index, stats, max_length, prefix, postfix, save_folder):
     get_plot(plt, x, stats, goal_index, 'standard', 'lightcoral', 'reward')
     get_plot(plt, x, stats, goal_index, 'options', 'mediumseagreen', 'reward')
 
-    plt.legend(['No options', 'With options'], loc='lower right', framealpha=legend_alpha)
+    plt.legend(['No options', 'With options'],
+               loc='lower right', framealpha=legend_alpha)
 
     ax.set_xlim(xmin=0)
     ax.set_xlim(xmax=max_length)
@@ -89,7 +92,8 @@ def plot_episode_length(goal_index, stats, max_length, prefix, postfix, save_fol
     get_plot(plt, x, stats, goal_index, 'standard', 'lightcoral', '')
     get_plot(plt, x, stats, goal_index, 'options', 'mediumseagreen', '')
 
-    plt.legend(['No options', 'With options'], loc='upper right', framealpha=legend_alpha)
+    plt.legend(['No options', 'With options'],
+               loc='upper right', framealpha=legend_alpha)
     plt.xlabel("Episode")
     plt.ylabel("Episode Length")
 
@@ -111,16 +115,17 @@ def plot_episode_time_step(goal_index, stats, max_length, prefix, postfix, save_
     get_plot(plt, x, stats, goal_index, 'options', 'mediumseagreen', 'cumsum')
     # get_plot(plt, x, stats, goal_index, 'optimal', 'black', 'cumsum', line='--')
 
-    plt.legend(['No options', 'With options'], loc='upper left', framealpha=legend_alpha)
+    plt.legend(['No options', 'With options'],
+               loc='upper left', framealpha=legend_alpha)
 
     plt.ylabel("Time Steps")
     plt.xlabel("Number of tasks")
     ax.set_ylim(ymin=0)
     ax.set_xlim(xmin=0)
     ax.set_xlim(xmax=max_length)
-    plt.title(prefix + "Number of time-steps to solve n-tasks" + postfix)
-    file_name = str(goal_index + 1) + '_' + (prefix + "Number of time-steps to solve n-tasks").replace(' ',
-                                                                                                       '_').replace(
+    plt.title(prefix + "Number of time-steps to solve n-episodes" + postfix)
+    file_name = str(goal_index + 1) + '_' + (prefix + "Number of time-steps to solve n-episodes").replace(' ',
+                                                                                                          '_').replace(
         ':',
         '_')
 
@@ -140,7 +145,8 @@ def plot_all(params, stats, output_dir, max_length=None):
         postfix = " (averaged over " + str(number_of_runs) + " runs)"
         plot_rewards(i, stats, max_length, prefix, postfix, output_dir)
         plot_episode_length(i, stats, max_length, prefix, postfix, output_dir)
-        plot_episode_time_step(i, stats, max_length, prefix, postfix, output_dir)
+        plot_episode_time_step(i, stats, max_length,
+                               prefix, postfix, output_dir)
 
 
 def run(parameters):
@@ -164,7 +170,8 @@ def run(parameters):
             print('\nRun:', i)
             env = gym.make(goal + "-v0")
             # with out options
-            standard_agent = QLearningAgent(env, gamma=gamma, alpha=alpha, epsilon=epsilon)
+            standard_agent = QLearningAgent(
+                env, gamma=gamma, alpha=alpha, epsilon=epsilon)
             standard_stats = standard_agent.train(num_episodes)
             run_stats_standard.append(standard_stats)
 
@@ -176,7 +183,8 @@ def run(parameters):
 
             env.close()
 
-        all_stats.append({"standard": run_stats_standard, 'options': run_stats_options})
+        all_stats.append({"standard": run_stats_standard,
+                          'options': run_stats_options})
 
     return all_stats
 
