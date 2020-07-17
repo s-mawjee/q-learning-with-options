@@ -119,7 +119,7 @@ def plot_episode_time_step(goal_index, stats, max_length, prefix, postfix, save_
                loc='upper left', framealpha=legend_alpha)
 
     plt.ylabel("Time Steps")
-    plt.xlabel("Number of tasks")
+    plt.xlabel("Number of episodes")
     ax.set_ylim(ymin=0)
     ax.set_xlim(xmin=0)
     ax.set_xlim(xmax=max_length)
@@ -224,7 +224,7 @@ def main():
                   'alpha': 0.125,
                   'epsilon': 0.1,
                   'goals': ['G1', 'G2'],
-                  'number_of_runs': 25}
+                  'number_of_runs': 10}
 
     if (os.path.isdir(output_folder)):
         shutil.rmtree(output_folder)
@@ -248,16 +248,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-    # output_folder = "./output/"
-    # parameters = {'episodes': 1000,
-    #               'gamma': 0.9,
-    #               'alpha': 0.125,
-    #               'epsilon': 0.1,
-    #               'goals': ['G1', 'G2'],
-    #               'number_of_runs': 25}
-    #
-    # input_file = open(output_folder + 'all_stats' + ".pkl", 'rb')
-    # all_stats = dill.load(input_file)
-    # # plot
-    # plot_all(parameters, all_stats, output_folder, max_length=500)

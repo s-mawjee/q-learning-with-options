@@ -1,0 +1,6 @@
+dill
+matplotlib
+numpy
+pandas
+gym
+qbstyles
